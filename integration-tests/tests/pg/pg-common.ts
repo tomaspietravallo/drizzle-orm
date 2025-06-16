@@ -6404,5 +6404,35 @@ export function tests() {
 			expectTypeOf(rawRes).toEqualTypeOf<ExpectedType>();
 			expect(rawRes).toStrictEqual(expectedRes);
 		});
+
+		test('unrestrictedUpdates: update without where clause', async (ctx) => {
+			const { db } = ctx.pg;
+
+			// @ts-expect-error Modify unrestrictedUpdate to prevent updates without where clause
+			db.dialect.unrestrictedUpdates = false;
+
+			await db.insert(usersTable).values({ name: 'John' });
+			await expect(async () => await db.update(usersTable).set({ name: 'Maria' })).rejects.toThrowError();
+			await expect(db.update(usersTable).set({ name: 'Maria' }).where(eq(usersTable.name, 'John'))).resolves.not.toThrow();
+
+			// @ts-expect-error Modify unrestrictedUpdate back to default
+			db.dialect.unrestrictedUpdates = true;
+			await expect(db.update(usersTable).set({ name: 'John' })).resolves.not.toThrow();
+		});
+
+		test('unrestrictedUpdates: delete without where clause', async (ctx) => {
+			const { db } = ctx.pg;
+
+			// @ts-expect-error Modify unrestrictedUpdate to prevent deletes without where clause
+			db.dialect.unrestrictedUpdates = false;
+
+			await db.insert(usersTable).values({ name: 'John' });
+			await expect(async () => await db.delete(usersTable)).rejects.toThrowError();
+			await expect(db.delete(usersTable).where(eq(usersTable.name, 'John'))).resolves.not.toThrow();
+
+			// @ts-expect-error Modify unrestrictedUpdate back to default
+			db.dialect.unrestrictedUpdates = true;
+			await expect(db.delete(usersTable)).resolves.not.toThrow();
+		});
 	});
 }
