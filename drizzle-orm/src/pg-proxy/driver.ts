@@ -27,7 +27,7 @@ export type RemoteCallback = (
 export function drizzle<TSchema extends Record<string, unknown> = Record<string, never>>(
 	callback: RemoteCallback,
 	config: DrizzleConfig<TSchema> = {},
-	_dialect: () => PgDialect = () => new PgDialect({ casing: config.casing }),
+	_dialect: () => PgDialect = () => new PgDialect({ casing: config.casing, unrestrictedUpdates: config.unrestrictedUpdates }),
 ): PgRemoteDatabase<TSchema> {
 	const dialect = _dialect();
 	let logger;

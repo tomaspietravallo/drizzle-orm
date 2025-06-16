@@ -31,7 +31,7 @@ export function drizzle<
 ): DrizzleSqliteDODatabase<TSchema> & {
 	$client: TClient;
 } {
-	const dialect = new SQLiteSyncDialect({ casing: config.casing });
+	const dialect = new SQLiteSyncDialect({ casing: config.casing, unrestrictedUpdates: config.unrestrictedUpdates });
 	let logger;
 	if (config.logger === true) {
 		logger = new DefaultLogger();
