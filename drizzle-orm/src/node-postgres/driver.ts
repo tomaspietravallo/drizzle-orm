@@ -55,7 +55,7 @@ function construct<
 ): NodePgDatabase<TSchema> & {
 	$client: TClient;
 } {
-	const dialect = new PgDialect({ casing: config.casing });
+	const dialect = new PgDialect({ casing: config.casing, unrestrictedUpdates: config.unrestrictedUpdates });
 	let logger;
 	if (config.logger === true) {
 		logger = new DefaultLogger();
