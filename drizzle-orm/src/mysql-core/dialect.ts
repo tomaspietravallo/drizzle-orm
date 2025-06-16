@@ -39,6 +39,7 @@ import { MySqlViewBase } from './view-base.ts';
 
 export interface MySqlDialectConfig {
 	casing?: Casing;
+	unrestrictedUpdates?: boolean;
 }
 
 export class MySqlDialect {
@@ -47,8 +48,11 @@ export class MySqlDialect {
 	/** @internal */
 	readonly casing: CasingCache;
 
+	unrestrictedUpdates: boolean;
+
 	constructor(config?: MySqlDialectConfig) {
 		this.casing = new CasingCache(config?.casing);
+		this.unrestrictedUpdates = config?.unrestrictedUpdates ?? true;
 	}
 
 	async migrate(
@@ -118,6 +122,10 @@ export class MySqlDialect {
 	}
 
 	buildDeleteQuery({ table, where, returning, withList, limit, orderBy }: MySqlDeleteConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Delete query must have a "where" clause');
+		}
+		
 		const withSql = this.buildWithCTE(withList);
 
 		const returningSql = returning
@@ -155,6 +163,10 @@ export class MySqlDialect {
 	}
 
 	buildUpdateQuery({ table, set, where, returning, withList, limit, orderBy }: MySqlUpdateConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Update query must have a "where" clause');
+		}
+
 		const withSql = this.buildWithCTE(withList);
 
 		const setSql = this.buildUpdateSet(table, set);
