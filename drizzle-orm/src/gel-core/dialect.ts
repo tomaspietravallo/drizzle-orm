@@ -46,6 +46,7 @@ import type { GelMaterializedView } from './view.ts';
 
 export interface GelDialectConfig {
 	casing?: Casing;
+	unrestrictedUpdates?: boolean;
 }
 
 export class GelDialect {
@@ -54,8 +55,11 @@ export class GelDialect {
 	/** @internal */
 	readonly casing: CasingCache;
 
+	unrestrictedUpdates: boolean;
+
 	constructor(config?: GelDialectConfig) {
 		this.casing = new CasingCache(config?.casing);
+		this.unrestrictedUpdates = config?.unrestrictedUpdates ?? true;
 	}
 
 	// TODO can not migrate gel with drizzle
@@ -127,6 +131,10 @@ export class GelDialect {
 	}
 
 	buildDeleteQuery({ table, where, returning, withList }: GelDeleteConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Delete query must have a "where" clause');
+		}
+		
 		const withSql = this.buildWithCTE(withList);
 
 		const returningSql = returning
@@ -160,6 +168,10 @@ export class GelDialect {
 	}
 
 	buildUpdateQuery({ table, set, where, returning, withList, from, joins }: GelUpdateConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Update query must have a "where" clause');
+		}
+
 		const withSql = this.buildWithCTE(withList);
 
 		const tableName = table[GelTable.Symbol.Name];

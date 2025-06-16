@@ -58,6 +58,7 @@ import type { PgMaterializedView } from './view.ts';
 
 export interface PgDialectConfig {
 	casing?: Casing;
+	unrestrictedUpdates?: boolean;
 }
 
 export class PgDialect {
@@ -66,8 +67,11 @@ export class PgDialect {
 	/** @internal */
 	readonly casing: CasingCache;
 
+	unrestrictedUpdates: boolean;
+
 	constructor(config?: PgDialectConfig) {
 		this.casing = new CasingCache(config?.casing);
+		this.unrestrictedUpdates = config?.unrestrictedUpdates ?? true;
 	}
 
 	async migrate(migrations: MigrationMeta[], session: PgSession, config: string | MigrationConfig): Promise<void> {
@@ -138,6 +142,10 @@ export class PgDialect {
 	}
 
 	buildDeleteQuery({ table, where, returning, withList }: PgDeleteConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Delete query must have a "where" clause');
+		}
+
 		const withSql = this.buildWithCTE(withList);
 
 		const returningSql = returning
@@ -171,6 +179,10 @@ export class PgDialect {
 	}
 
 	buildUpdateQuery({ table, set, where, returning, withList, from, joins }: PgUpdateConfig): SQL {
+		if (!this.unrestrictedUpdates && !where) {
+			throw new Error('Update query must have a "where" clause');
+		}
+		
 		const withSql = this.buildWithCTE(withList);
 
 		const tableName = table[PgTable.Symbol.Name];
